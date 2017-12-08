@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '2.0.1'
+}
+
+group 'com.frederikam'
+version '0.1'
+
+sourceCompatibility = 1.8
+mainClassName = "com.frederikam.piprint.Main"
+ext {
+    moduleName = 'piprint'
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven {
+        url "https://oss.sonatype.org/content/groups/public"
+    }
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile 'com.pi4j:pi4j-core:1.2-SNAPSHOT'
+    compile 'com.pi4j:pi4j-device:1.2-SNAPSHOT'
+    compile 'org.apache.xmlgraphics:batik:1.9.1'
+    compile group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '3.1.0'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+    compile 'org.slf4j:slf4j-simple:1.7.25'
+}
