@@ -37,6 +37,10 @@ public class Point {
         return new Point(x - other.x, y - other.y);
     }
 
+    public Point multiply(double factor) {
+        return new Point(x * factor, y * factor);
+    }
+
     @Override
     public String toString() {
         return "(" + x + "," + y + ')';

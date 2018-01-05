@@ -1,13 +1,11 @@
 package com.frederikam.piprint.svg;
 
+import com.frederikam.piprint.svg.geom.CubicBezierCurve;
 import com.frederikam.piprint.svg.geom.Line;
 import com.frederikam.piprint.svg.geom.Point;
 import com.frederikam.piprint.svg.geom.StraightLine;
 import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -34,7 +32,7 @@ public class Path {
      */
     private LinkedList<Point> subpathStartPoints = new LinkedList<>();
 
-    Path(Node node) throws ParserConfigurationException, IOException, SAXException {
+    Path(Node node) {
         String d = node.getAttributes().getNamedItem("d").getTextContent();
         Matcher matcher = cmdPattern.matcher(d);
 
@@ -64,6 +62,9 @@ public class Path {
                     break;
                 case 'v':
                     cmdLineToVertical(cmd);
+                    break;
+                case 'c':
+                    cmdLineToCubicBezier(cmd);
                     break;
                 default:
                     System.out.println("Unknown command: " + cmd.toString());
@@ -117,10 +118,10 @@ public class Path {
             Point newPos;
             if (cmd.isRelative()) {
                 newPos = currentPos.plus(
-                        new Point(cmd.args().get(0), cmd.args().get(1))
+                        new Point(cmd.args().get(i*2), cmd.args().get(i*2+1))
                 );
             } else {
-                newPos = new Point(cmd.args().get(0), cmd.args().get(1));
+                newPos = new Point(cmd.args().get(i*2), cmd.args().get(i*2+1));
             }
 
             lines.add(new StraightLine(currentPos, newPos));
@@ -146,6 +147,26 @@ public class Path {
         Point newPos = new Point(currentPos.getX(), newY);
         lines.add(new StraightLine(currentPos, newPos));
         currentPos = newPos;
+    }
+
+    private void cmdLineToCubicBezier(Command cmd) {
+        for (int i = 0; i < cmd.args().size() / 6; i++) {
+            List<Double> args = cmd.args();
+            Point p1 = currentPos;
+            Point p2 = new Point(args.get(i*6  ), args.get(i*6+1));
+            Point p3 = new Point(args.get(i*6+2), args.get(i*6+3));
+            Point p4 = new Point(args.get(i*6+4), args.get(i*6+5));
+
+            if (cmd.isRelative()) {
+                p2 = p1.plus(currentPos);
+                p3 = p2.plus(currentPos);
+                p4 = p3.plus(currentPos);
+            }
+
+            lines.add(new CubicBezierCurve(p1, p2, p3, p4));
+
+            currentPos = p4;
+        }
     }
 
     private class Command {

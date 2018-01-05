@@ -10,7 +10,7 @@ class SvgUtil {
         StringBuilder currentChars = new StringBuilder();
 
         for (char ch : str.toCharArray()) {
-            if (ch == ' ') {
+            if (ch == ' ' || ch == ',') {
                 // This is a separator
                 if (currentChars.length() != 0) {
                     list.add(Double.parseDouble(currentChars.toString()));

@@ -4,10 +4,12 @@ public class StraightLine implements Line {
 
     private final Point start;
     private final Point end;
+    private final Point diff;
 
     public StraightLine(Point start, Point end) {
         this.start = start;
         this.end = end;
+        this.diff = end.minus(start);
     }
 
     public Point getStart() {
@@ -24,5 +26,10 @@ public class StraightLine implements Line {
                 start +
                 "->" + end +
                 '}';
+    }
+
+    @Override
+    public Point tween(double t) {
+        return start.plus(diff.multiply(t));
     }
 }

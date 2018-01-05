@@ -3,7 +3,7 @@ package com.frederikam.piprint;
 import com.frederikam.piprint.svg.Path;
 import com.frederikam.piprint.svg.Svg;
 import com.frederikam.piprint.svg.geom.Line;
-import com.frederikam.piprint.svg.geom.StraightLine;
+import com.frederikam.piprint.svg.geom.Point;
 import org.xml.sax.SAXException;
 
 import javax.imageio.ImageIO;
@@ -46,14 +46,20 @@ public class Main {
 
                     for (Path path : svg.getPaths()) {
                         for (Line line : path.getLines()) {
-                            if (line instanceof StraightLine) {
+                            for (int i = 0; i < 201; i++) {
+                                double t = ((double) i) / 200;
+                                Point point = line.tween(t);
+                                graphics.drawOval((int) point.getX(), (int) point.getY(), 1, 1);
+                            }
+
+                            /*if (line instanceof StraightLine) {
                                 StraightLine l = (StraightLine) line;
                                 graphics.drawLine(
                                         (int) l.getStart().getX(),
                                         (int) l.getStart().getY(),
                                         (int) l.getEnd().getX(),
                                         (int) l.getEnd().getY());
-                            }
+                            }*/
                         }
                     }
 
