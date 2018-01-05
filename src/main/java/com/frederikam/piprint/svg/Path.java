@@ -1,7 +1,7 @@
 package com.frederikam.piprint.svg;
 
-import com.frederikam.piprint.svg.line.Line;
-import com.frederikam.piprint.svg.line.StraightLine;
+import com.frederikam.piprint.svg.geom.Line;
+import com.frederikam.piprint.svg.geom.StraightLine;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -96,7 +96,7 @@ public class Path {
          same initial point as the current subpath.
          */
 
-        // Close the subpath with a straight line
+        // Close the subpath with a straight geom
         Point newPos = subpathStartPoints.pollLast();
         lines.add(new StraightLine(currentPos, newPos));
         currentPos = newPos;

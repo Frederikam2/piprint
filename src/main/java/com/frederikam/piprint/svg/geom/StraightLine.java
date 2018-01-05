@@ -1,4 +1,4 @@
-package com.frederikam.piprint.svg.line;
+package com.frederikam.piprint.svg.geom;
 
 import com.frederikam.piprint.svg.Point;
 
