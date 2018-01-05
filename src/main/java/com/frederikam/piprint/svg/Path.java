@@ -9,7 +9,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,10 +41,10 @@ public class Path {
 
         while (matcher.find()) {
             char cmd = matcher.group(1).charAt(0);
-            List<Double> argList = new LinkedList<>();
+            /*List<Double> argList = new LinkedList<>();
             Scanner scanner = new Scanner(matcher.group(2));
-            while (scanner.hasNextDouble()) argList.add(scanner.nextDouble());
-            commands.add(new Command(cmd, argList));
+            while (scanner.hasNextDouble()) argList.add(scanner.nextDouble());*/
+            commands.add(new Command(cmd, matcher.group(2)));
         }
 
         for (Command cmd : commands) {
@@ -70,19 +69,19 @@ public class Path {
     private void cmdMoveTo(Command cmd) {
         if (cmd.isRelative()) {
             currentPos = currentPos.plus(
-                    new Point(cmd.args.get(0), cmd.args.get(1))
+                    new Point(cmd.args().get(0), cmd.args().get(1))
             );
         } else {
-            currentPos = new Point(cmd.args.get(0), cmd.args.get(1));
+            currentPos = new Point(cmd.args().get(0), cmd.args().get(1));
         }
 
         subpathStartPoints.add(currentPos);
 
         // Extra x/y pairs will be treated as lineto args as per the spec
-        if (cmd.args.size() > 2) {
+        if (cmd.args().size() > 2) {
             cmdLineTo(new Command(
                     cmd.isRelative() ? 'l' : 'L',
-                    cmd.args.subList(2, cmd.args.size()))
+                    cmd.args().subList(2, cmd.args().size()))
             );
         }
     }
@@ -107,14 +106,14 @@ public class Path {
 
     private void cmdLineTo(Command cmd) {
         // Iterate pairs
-        for (int i = 0; i < cmd.args.size() / 2; i++) {
+        for (int i = 0; i < cmd.args().size() / 2; i++) {
             Point newPos;
             if (cmd.isRelative()) {
                 newPos = currentPos.plus(
-                        new Point(cmd.args.get(0), cmd.args.get(1))
+                        new Point(cmd.args().get(0), cmd.args().get(1))
                 );
             } else {
-                newPos = new Point(cmd.args.get(0), cmd.args.get(1));
+                newPos = new Point(cmd.args().get(0), cmd.args().get(1));
             }
 
             lines.add(new StraightLine(currentPos, newPos));
@@ -124,11 +123,23 @@ public class Path {
 
     private class Command {
         final char command;
-        final List<Double> args;
+        private final String argsRaw;
+        private final List<Double> argsDouble;
+
+        private Command(char command, String args) {
+            this.command = command;
+            this.argsRaw = args;
+            this.argsDouble = SvgUtil.parsePathCommandArgs(args);
+        }
 
         private Command(char command, List<Double> args) {
             this.command = command;
-            this.args = args;
+
+            List<String> argsAsStrings = new LinkedList<>();
+            args.forEach(d -> argsAsStrings.add(d.toString()));
+
+            this.argsRaw = String.join(" ", argsAsStrings);
+            this.argsDouble = args;
         }
 
         /**
@@ -140,11 +151,19 @@ public class Path {
             return Character.isLowerCase(command);
         }
 
+        List<Double> args() {
+            return argsDouble;
+        }
+
+        public String getArgsRaw() {
+            return argsRaw;
+        }
+
         @Override
         public String toString() {
             return "Command{" +
                     "command=" + command +
-                    ", args=" + args +
+                    ", args=" + args() +
                     '}';
         }
     }
