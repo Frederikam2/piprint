@@ -1,4 +1,4 @@
-package com.frederikam.piprint.svg;
+package com.frederikam.piprint.svg.geom;
 
 /**
  * A double precision point

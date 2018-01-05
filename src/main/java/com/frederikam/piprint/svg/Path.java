@@ -1,6 +1,7 @@
 package com.frederikam.piprint.svg;
 
 import com.frederikam.piprint.svg.geom.Line;
+import com.frederikam.piprint.svg.geom.Point;
 import com.frederikam.piprint.svg.geom.StraightLine;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;

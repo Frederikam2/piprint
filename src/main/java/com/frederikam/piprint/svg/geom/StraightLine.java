@@ -1,7 +1,5 @@
 package com.frederikam.piprint.svg.geom;
 
-import com.frederikam.piprint.svg.Point;
-
 public class StraightLine implements Line {
 
     private final Point start;
