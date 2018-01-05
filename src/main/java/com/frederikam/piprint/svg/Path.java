@@ -58,6 +58,12 @@ public class Path {
                 case 'l':
                     cmdLineTo(cmd);
                     break;
+                case 'h':
+                    cmdLineToHorizontal(cmd);
+                    break;
+                case 'v':
+                    cmdLineToVertical(cmd);
+                    break;
                 default:
                     System.out.println("Unknown command: " + cmd.toString());
             }
@@ -119,6 +125,26 @@ public class Path {
             lines.add(new StraightLine(currentPos, newPos));
             currentPos = newPos;
         }
+    }
+
+    private void cmdLineToHorizontal(Command cmd) {
+        double newX = cmd.isRelative() ? currentPos.getX() : 0;
+
+        for (double d : cmd.args()) { newX += d; }
+
+        Point newPos = new Point(newX, currentPos.getY());
+        lines.add(new StraightLine(currentPos, newPos));
+        currentPos = newPos;
+    }
+
+    private void cmdLineToVertical(Command cmd) {
+        double newY = cmd.isRelative() ? currentPos.getY() : 0;
+
+        for (double d : cmd.args()) { newY += d; }
+
+        Point newPos = new Point(currentPos.getX(), newY);
+        lines.add(new StraightLine(currentPos, newPos));
+        currentPos = newPos;
     }
 
     private class Command {
