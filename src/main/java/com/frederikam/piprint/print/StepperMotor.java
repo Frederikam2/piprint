@@ -61,4 +61,8 @@ public class StepperMotor {
         motor.setStepInterval(stepInterval);
         motor.step(steps);
     }
+
+    public void stop() {
+        motor.stop();
+    }
 }
