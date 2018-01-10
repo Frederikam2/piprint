@@ -1,12 +1,12 @@
 package com.frederikam.piprint.svg.geom;
 
 // https://www.geogebra.org/m/WPHQ9rUt
-public class CubicBezierCurve implements Line {
+public class CubicBezierCurve extends Line {
 
-    private final Point p1;
-    private final Point p2;
-    private final Point p3;
-    private final Point p4;
+    public final Point p1;
+    public final Point p2;
+    public final Point p3;
+    public final Point p4;
 
     public CubicBezierCurve(Point p1, Point p2, Point p3, Point p4) {
         this.p1 = p1;

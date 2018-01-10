@@ -40,25 +40,45 @@ public class Main {
                         System.out.println(path.getLines());
                     }
 
-                    BufferedImage image = new BufferedImage(245, 250, BufferedImage.TYPE_INT_ARGB);
+                    BufferedImage image = new BufferedImage(
+                            (int) svg.getViewBox().getWidth(),
+                            (int) svg.getViewBox().getHeight(),
+                            BufferedImage.TYPE_INT_ARGB);
                     Graphics graphics = image.getGraphics();
-                    graphics.setColor(Color.BLACK);
 
                     for (Path path : svg.getPaths()) {
                         for (Line line : path.getLines()) {
                             for (int i = 0; i < 201; i++) {
                                 double t = ((double) i) / 200;
                                 Point point = line.tween(t);
-                                graphics.drawOval((int) point.getX(), (int) point.getY(), 1, 1);
+                                graphics.setColor(line.getColor());
+                                graphics.fillOval(
+                                        (int) point.getX(),
+                                        (int) point.getY(),
+                                        2,
+                                        2);
                             }
 
-                            /*if (line instanceof StraightLine) {
-                                StraightLine l = (StraightLine) line;
+                            /*if (line instanceof CubicBezierCurve) {
+                                CubicBezierCurve curve = (CubicBezierCurve) line;
+                                graphics.fillOval((int) curve.p1.getX()*2, (int) curve.p1.getY()*2, 6,6);
+                                graphics.fillOval((int) curve.p2.getX()*2, (int) curve.p2.getY()*2, 6,6);
+                                graphics.fillOval((int) curve.p3.getX()*2, (int) curve.p3.getY()*2, 6,6);
+                                graphics.fillOval((int) curve.p4.getX()*2, (int) curve.p4.getY()*2, 6,6);
+
+
                                 graphics.drawLine(
-                                        (int) l.getStart().getX(),
-                                        (int) l.getStart().getY(),
-                                        (int) l.getEnd().getX(),
-                                        (int) l.getEnd().getY());
+                                        (int) curve.p1.getX()*2,
+                                        (int) curve.p1.getY()*2,
+                                        (int) curve.p2.getX()*2,
+                                        (int) curve.p2.getY()*2);
+                                graphics.setColor(Color.BLUE);
+                                graphics.drawLine(
+                                        (int) curve.p3.getX()*2,
+                                        (int) curve.p3.getY()*2,
+                                        (int) curve.p4.getX()*2,
+                                        (int) curve.p4.getY()*2);
+
                             }*/
                         }
                     }

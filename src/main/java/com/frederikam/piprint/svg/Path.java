@@ -6,6 +6,7 @@ import com.frederikam.piprint.svg.geom.Point;
 import com.frederikam.piprint.svg.geom.StraightLine;
 import org.w3c.dom.Node;
 
+import java.awt.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -23,6 +24,8 @@ public class Path {
      */
     @SuppressWarnings("FieldCanBeLocal")
     private static Pattern cmdPattern = Pattern.compile("([a-z])([^a-z]*)", Pattern.CASE_INSENSITIVE);
+    private Command lastCommand = null;
+    private Point positionBeforeLastCommand = null;
     private Point currentPos = new Point(0, 0);
     private List<Line> lines = new LinkedList<>();
 
@@ -66,9 +69,13 @@ public class Path {
                 case 'c':
                     cmdLineToCubicBezier(cmd);
                     break;
+                case 's':
+                    cmdLineToCubicBezierShorthand(cmd);
+                    break;
                 default:
                     System.out.println("Unknown command: " + cmd.toString());
             }
+            lastCommand = cmd;
         }
     }
 
@@ -158,14 +165,74 @@ public class Path {
             Point p4 = new Point(args.get(i*6+4), args.get(i*6+5));
 
             if (cmd.isRelative()) {
-                p2 = p1.plus(currentPos);
-                p3 = p2.plus(currentPos);
-                p4 = p3.plus(currentPos);
+                p2 = p2.plus(currentPos);
+                p3 = p3.plus(currentPos);
+                p4 = p4.plus(currentPos);
             }
 
             lines.add(new CubicBezierCurve(p1, p2, p3, p4));
-
+            positionBeforeLastCommand = currentPos;
             currentPos = p4;
+        }
+    }
+
+    private int test = 0;
+
+    private void cmdLineToCubicBezierShorthand(Command cmd) {
+        Point lastIterationP3 = null;
+        for (int i = 0; i < cmd.args().size() / 4; i++) {
+            List<Double> args = cmd.args();
+            // Getting point 1, 3 and 4 is easy
+            Point p1 = currentPos;
+            Point p2;
+            Point p3 = new Point(args.get(i*4  ), args.get(i*4+1));
+            Point p4 = new Point(args.get(i*4+2), args.get(i*4+3));
+            Color color = Color.BLACK;
+
+            // Determine point 2. If the last command was not a cubic bézier operation we will assign it to p1
+            if (i == 0) {
+                if (lastCommand != null &&
+                        (Character.toLowerCase(lastCommand.command) == 'c' || Character.toLowerCase(lastCommand.command) == 's')) {
+
+                    List<Double> lastCmdArgs = lastCommand.args();
+                    Point lastP3;
+                    if (Character.toLowerCase(lastCommand.command) == 'c') {
+                        lastP3 = new Point(
+                                lastCmdArgs.get((lastCmdArgs.size()/6-1) * 6 + 2),
+                                lastCmdArgs.get((lastCmdArgs.size()/6-1) * 6 + 3));
+                    } else {
+                        lastP3 = new Point(
+                                lastCmdArgs.get((lastCmdArgs.size()/4-1) * 4),
+                                lastCmdArgs.get((lastCmdArgs.size()/4-1) * 4 + 1));
+                    }
+
+                    if (lastCommand.isRelative()) {
+                        lastP3 = lastP3.plus(positionBeforeLastCommand);
+                    }
+                    lastP3 = lastP3.minus(currentPos);
+                    p2 = lastP3.multiply(-1); // Mirror it
+                } else {
+                    p2 = cmd.isRelative() ? new Point(0,0) : p1;
+                }
+            } else {
+                //noinspection ConstantConditions
+                p2 = lastIterationP3.multiply(-1); // Mirror it
+            }
+
+            lastIterationP3 = p3;
+
+            if (cmd.isRelative()) {
+                p2 = p2.plus(currentPos);
+                p3 = p3.plus(currentPos);
+                p4 = p4.plus(currentPos);
+            }
+
+            CubicBezierCurve curve = new CubicBezierCurve(p1, p2, p3, p4);
+            curve.setColor(color);
+            lines.add(curve);
+            positionBeforeLastCommand = p4;
+            currentPos = p4;
+            test++;
         }
     }
 

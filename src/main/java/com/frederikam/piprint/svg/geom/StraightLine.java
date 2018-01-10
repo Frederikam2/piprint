@@ -1,6 +1,6 @@
 package com.frederikam.piprint.svg.geom;
 
-public class StraightLine implements Line {
+public class StraightLine extends Line {
 
     private final Point start;
     private final Point end;

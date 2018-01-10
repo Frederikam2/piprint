@@ -1,7 +1,18 @@
 package com.frederikam.piprint.svg.geom;
 
-public interface Line {
+import java.awt.*;
 
-    Point tween(double t);
+public abstract class Line {
 
+    private Color color = Color.BLACK;
+
+    public abstract Point tween(double t);
+
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
 }
