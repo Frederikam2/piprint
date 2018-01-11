@@ -41,8 +41,16 @@ public class Point {
         return new Point(x * factor, y * factor);
     }
 
+    public Point divide(double dividend) {
+        return new Point(x / dividend, y / dividend);
+    }
+
     public double magnitude() {
         return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    }
+
+    public Point unit() {
+        return divide(magnitude());
     }
 
     @Override

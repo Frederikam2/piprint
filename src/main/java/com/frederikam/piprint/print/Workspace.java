@@ -17,9 +17,9 @@ public class Workspace {
     private Director director;
 
     /* Used to determine position */
-    private double nextPosition = 0; // Radians
+    private Point nextPosition = new Point(0, 0);
     private Point lastPosition = new Point(0, 0);
-    private long lastTime = System.nanoTime();
+    private long lastTime = System.currentTimeMillis();
 
     public Workspace(StepperMotor stepperX, StepperMotor stepperY, ServoMotor servoMotor, Svg svg, int minStepInterval) {
         this.stepperX = stepperX;
@@ -57,8 +57,18 @@ public class Workspace {
         director.start();
     }
 
-    public Point getCurrentPosition() {
 
+    /**
+     * Tween between the last and target point, using the difference between the current time and the ETA.
+     *
+     * @return the estimated position
+     */
+    private Point getCurrentPosition() {
+        Point posDiff = lastPosition.minus(nextPosition);
+        double timeDiff = System.currentTimeMillis() - lastTime;
+        double timeBetweenPoints = (posDiff.magnitude() * minStepInterval);
+
+        return lastPosition.plus(posDiff.multiply(timeDiff / timeBetweenPoints));
     }
 
     /**
@@ -87,17 +97,41 @@ public class Workspace {
             }
         }
 
-        private void drawPath(LinkedList<Point> path) {
+        private void drawPath(LinkedList<Point> path) throws InterruptedException {
             for (int i = 0; i < path.size(); i++) {
                 Point pos = path.removeFirst();
+                nextPosition = pos;
                 goToPoint(pos);
                 lastPosition = pos;
-                lastTime = System.nanoTime();
+                lastTime = System.currentTimeMillis();
             }
         }
 
-        private void goToPoint(Point point) {
+        private void goToPoint(Point point) throws InterruptedException {
+            Point unit = point.unit();
 
+            // Must not divide by zero
+            int intervalX = 0;
+            int intervalY = 0;
+            if (intervalX != unit.getX()) intervalX = (int) (minStepInterval / unit.getX());
+            if (intervalY != unit.getY()) intervalY = (int) (minStepInterval / unit.getY());
+
+            // Must not multiply by zero
+            Point diff = point.minus(lastPosition);
+            long time;
+            if (intervalX != 0) {
+                time = (long) (intervalX * diff.getX());
+            } else if (intervalY != 0) {
+                time = (long) (intervalY * diff.getY());
+            } else {
+                // Distance is zero
+                return;
+            }
+
+            stepperX.step((long) diff.getX(), intervalX);
+            stepperY.step((long) diff.getY(), intervalY);
+
+            Thread.sleep(time);
         }
     }
 }
