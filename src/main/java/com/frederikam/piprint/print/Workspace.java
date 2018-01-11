@@ -10,7 +10,7 @@ public class Workspace {
     private final Svg svg;
     private final StepperMotor stepperX;
     private final StepperMotor stepperY;
-    private final ServoMotor servoMotor;
+    private final Servo servoMotor;
     private final int minStepInterval; // Where half speed is 2x this interval
     private final LinkedList<LinkedList<Point>> paths = new LinkedList<>();
 
@@ -21,7 +21,7 @@ public class Workspace {
     private Point lastPosition = new Point(0, 0);
     private long lastTime = System.currentTimeMillis();
 
-    public Workspace(StepperMotor stepperX, StepperMotor stepperY, ServoMotor servoMotor, Svg svg, int minStepInterval) {
+    public Workspace(StepperMotor stepperX, StepperMotor stepperY, Servo servoMotor, Svg svg, int minStepInterval) {
         this.stepperX = stepperX;
         this.stepperY = stepperY;
         this.servoMotor = servoMotor;
@@ -47,16 +47,23 @@ public class Workspace {
 
         try {
             servoMotor.reset();
-            Thread.sleep(Math.max(0, 1000 * minStepInterval - ServoMotor.DELAY));
+            Thread.sleep(Math.max(0, 1000 * minStepInterval - Servo.DELAY));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-
-        // Begin the director
-        director = new Director();
-        director.start();
     }
 
+    public void setPause(boolean bool) {
+        if (bool) {
+            if (director != null && director.getState() != Thread.State.TERMINATED) return;
+
+            // Begin the director
+            director = new Director();
+            director.start();
+        } else {
+            director.interrupt();
+        }
+    }
 
     /**
      * Tween between the last and target point, using the difference between the current time and the ETA.

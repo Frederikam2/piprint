@@ -3,9 +3,10 @@ package com.frederikam.piprint.print;
 import com.pi4j.component.motor.impl.GpioStepperMotorComponent;
 import com.pi4j.io.gpio.*;
 
+import static com.frederikam.piprint.Main.gpio;
+
 public class StepperMotor {
 
-    private final GpioController gpio = GpioFactory.getInstance();
     private final GpioPinDigitalOutput pin1;
     private final GpioPinDigitalOutput pin2;
     private final GpioPinDigitalOutput pin3;
