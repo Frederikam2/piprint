@@ -2,10 +2,14 @@ package com.frederikam.piprint.print;
 
 import com.frederikam.piprint.svg.Svg;
 import com.frederikam.piprint.svg.geom.Point;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 
 public class Workspace {
+
+    private static final Logger log = LoggerFactory.getLogger(Workspace.class);
 
     private final Svg svg;
     private final StepperMotor stepperX;
@@ -33,7 +37,7 @@ public class Workspace {
             LinkedList<Point> newPath = new LinkedList<>();
 
             path.getLines().forEach(line -> {
-                for (double i = 0; i < 201; i++) {
+                for (double i = 0; i < 2; i++) {
                     newPath.add(line.tween(i/200d));
                 }
             });
@@ -41,13 +45,14 @@ public class Workspace {
             paths.add(newPath);
         });
 
-        // Make sure we are at 0
-        stepperX.step(-1000, minStepInterval);
-        stepperY.step(-1000, minStepInterval);
-
         try {
+            log.info("Lifting servo");
             servoMotor.reset();
-            Thread.sleep(Math.max(0, 1000 * minStepInterval - Servo.DELAY));
+
+            log.info("Moving to 0,0");
+            stepperX.step(-1000, minStepInterval);
+            stepperY.step(-1000, minStepInterval);
+            Thread.sleep(1000 * minStepInterval);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -55,13 +60,13 @@ public class Workspace {
 
     public void setPause(boolean bool) {
         if (bool) {
+            director.interrupt();
+        } else {
             if (director != null && director.getState() != Thread.State.TERMINATED) return;
 
             // Begin the director
             director = new Director();
             director.start();
-        } else {
-            director.interrupt();
         }
     }
 
@@ -85,13 +90,17 @@ public class Workspace {
 
         Director() {
             setName("Director");
+            setDaemon(false);
             setPriority(Thread.MAX_PRIORITY);
         }
 
         @Override
         public void run() {
             try {
-                for (int i = 0; i < paths.size(); i++) {
+                int i = 0;
+                while(!paths.isEmpty()) {
+                    i++;
+                    log.info("Began drawing path {} of {}", i, paths.size());
                     drawPath(paths.removeFirst());
                     servoMotor.setLowered(false);
                 }
@@ -138,7 +147,7 @@ public class Workspace {
             stepperX.step((long) diff.getX(), intervalX);
             stepperY.step((long) diff.getY(), intervalY);
 
-            Thread.sleep(time);
+            Thread.sleep(Math.abs(time));
         }
     }
 }
