@@ -6,6 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Workspace {
 
@@ -17,6 +21,7 @@ public class Workspace {
     private final Servo servoMotor;
     private final int minStepInterval; // Where half speed is 2x this interval
     private final LinkedList<LinkedList<Point>> paths = new LinkedList<>();
+    private final ExecutorService stepperExecutor = Executors.newFixedThreadPool(2);
 
     private Director director;
 
@@ -50,12 +55,15 @@ public class Workspace {
             servoMotor.reset();
 
             log.info("Moving to 0,0");
-            stepperX.step(-1000, minStepInterval);
-            stepperY.step(-1000, minStepInterval);
-            Thread.sleep(1000 * minStepInterval);
+            moveSync(-1600, minStepInterval,
+                    -1600, minStepInterval);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public boolean isPaused() {
+        return director == null || director.getState() != Thread.State.RUNNABLE;
     }
 
     public void setPause(boolean bool) {
@@ -83,6 +91,19 @@ public class Workspace {
         return lastPosition.plus(posDiff.multiply(timeDiff / timeBetweenPoints));
     }
 
+    // Move synchronously with both steppers
+    private void moveSync(int stepsX, int intervalX, int stepsY, int intervalY) throws InterruptedException {
+        Future futureX = stepperExecutor.submit(() -> stepperX.step(stepsX, intervalX));
+        Future futureY = stepperExecutor.submit(() -> stepperY.step(stepsY, intervalY));
+
+        try {
+            futureX.get();
+            futureY.get();
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * The Thread responsible for making sure we are going in the right direction
      */
@@ -96,11 +117,12 @@ public class Workspace {
 
         @Override
         public void run() {
+            int i = 0;
+            int size = paths.size();
             try {
-                int i = 0;
                 while(!paths.isEmpty()) {
                     i++;
-                    log.info("Began drawing path {} of {}", i, paths.size());
+                    log.info("Began drawing path {} of {}", i, size);
                     drawPath(paths.removeFirst());
                     servoMotor.setLowered(false);
                 }
@@ -111,6 +133,7 @@ public class Workspace {
                     paths.get(0).add(0, getCurrentPosition());
                 }
             }
+            log.info("Finished drawing {} paths", size);
         }
 
         private void drawPath(LinkedList<Point> path) throws InterruptedException {
@@ -132,22 +155,10 @@ public class Workspace {
             if (intervalX != unit.getX()) intervalX = (int) (minStepInterval / unit.getX());
             if (intervalY != unit.getY()) intervalY = (int) (minStepInterval / unit.getY());
 
-            // Must not multiply by zero
             Point diff = point.minus(lastPosition);
-            long time;
-            if (intervalX != 0) {
-                time = (long) (intervalX * diff.getX());
-            } else if (intervalY != 0) {
-                time = (long) (intervalY * diff.getY());
-            } else {
-                // Distance is zero
-                return;
-            }
 
-            stepperX.step((long) diff.getX(), intervalX);
-            stepperY.step((long) diff.getY(), intervalY);
-
-            Thread.sleep(Math.abs(time));
+            moveSync((int) diff.getX(), intervalX,
+                    (int) diff.getY(), intervalY);
         }
     }
 }
