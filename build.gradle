@@ -25,8 +25,7 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compile 'com.pi4j:pi4j-core:1.2-SNAPSHOT'
     compile 'com.pi4j:pi4j-device:1.2-SNAPSHOT'
-    compile 'org.apache.xmlgraphics:batik:1.9.1'
     compile group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '3.1.0'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
-    compile 'org.slf4j:slf4j-simple:1.7.25'
+    compile 'org.slf4j:slf4j-api:1.7.25'
 }
