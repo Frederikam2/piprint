@@ -72,6 +72,14 @@ public class Main {
             case "svgtest":
                 new SvgTest().run(args);
                 break;
+            case "servotest":
+                servo = new Servo(gpio.provisionDigitalOutputPin(RaspiPin.GPIO_08), 50);
+                log.info("Lowering");
+                //servo.setLowered(true);
+                log.info("Lifting");
+                servo.setLowered(false);
+                Thread.sleep(10000);
+                break;
         }
     }
 
