@@ -12,6 +12,7 @@ public class StraightLine extends Line {
         this.diff = end.minus(start);
     }
 
+    @Override
     public Point getStart() {
         return start;
     }

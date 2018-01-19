@@ -4,32 +4,31 @@ import com.frederikam.piprint.print.Workspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Console;
+import java.util.Scanner;
 
 public class ConsoleListener extends Thread {
 
     private static final Logger log = LoggerFactory.getLogger(ConsoleListener.class);
 
-    private final Console console;
     private final Workspace workspace;
 
-    public ConsoleListener(Console console, Workspace workspace) {
-        this.console = console;
+    public ConsoleListener(Workspace workspace) {
         this.workspace = workspace;
         setDaemon(true);
         setName("ConsoleListener");
         String str = "Available commands:" +
-                        "s:    Stop" +
-                        "r:    Resume" +
-                        "e:    Emergency stop";
+                        "\ns:    Stop" +
+                        "\nr:    Resume" +
+                        "\ne:    Emergency stop";
         log.info(str);
     }
 
     @Override
     public void run() {
+        Scanner scanner = new Scanner(System.in);
         //noinspection InfiniteLoopStatement
         while (true) {
-            String command = console.readLine();
+            String command = scanner.nextLine();
 
             switch (command) {
                 case "s":

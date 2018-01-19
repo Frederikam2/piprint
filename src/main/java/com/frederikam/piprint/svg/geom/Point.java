@@ -53,6 +53,14 @@ public class Point {
         return divide(magnitude());
     }
 
+    public Point scaleToHaveOneAxisBe1() {
+        if (x == 0 && y == 0) return this;
+
+        boolean isXLargestAxis = Math.abs(x) > Math.abs(y);
+        double factor = Math.abs(isXLargestAxis ? 1 / x : 1 / y);
+        return multiply(factor);
+    }
+
     @Override
     public String toString() {
         return "(" + x + "," + y + ')';

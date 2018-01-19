@@ -56,17 +56,17 @@ public class Main {
                 Svg svg = new Svg(xml);
                 Workspace workspace = new Workspace(s1, s2, servo, svg, 5);
                 workspace.setPause(false);
-                new ConsoleListener(System.console(), workspace).start();
+                new ConsoleListener(workspace).start();
                 break;
             case "steptest":
                 new StepTest().run();
                 break;
             case "twomotors":
-                StepperMotor sm1 = new StepperMotor(RaspiPin.GPIO_00, RaspiPin.GPIO_01, RaspiPin.GPIO_02, RaspiPin.GPIO_03);
+                StepperMotor sm1 = new StepperMotor(RaspiPin.GPIO_00, RaspiPin.GPIO_01, RaspiPin.GPIO_02, RaspiPin.GPIO_03, 400);
                 StepperMotor sm2 = new StepperMotor(RaspiPin.GPIO_04, RaspiPin.GPIO_05, RaspiPin.GPIO_06, RaspiPin.GPIO_07);
                 ExecutorService exec = Executors.newFixedThreadPool(2);
-                exec.submit(() -> sm1.step(-800000, 2));
-                //exec.submit(() -> sm2.step(-800000, 2));
+                exec.submit(() -> sm1.step(4000000, 2));
+                exec.submit(() -> sm2.step(-80000000, 2));
                 exec.awaitTermination(1000, TimeUnit.SECONDS);
                 break;
             case "svgtest":
