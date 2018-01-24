@@ -1,6 +1,5 @@
 package com.frederikam.piprint.print;
 
-import com.frederikam.piprint.Main;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +15,6 @@ public class Servo {
     private volatile double pulseWidth = 0; // As % of cycle
 
     public Servo(GpioPinDigitalOutput pin, double cycleFrequency) {
-        Main.gpio.
         Thread servoThread = new Thread(() -> {
             //noinspection InfiniteLoopStatement
             while (true) {
