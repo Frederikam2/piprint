@@ -7,19 +7,24 @@ import org.slf4j.LoggerFactory;
 public class Servo {
 
     private static final Logger log = LoggerFactory.getLogger(Servo.class);
-    private static final double UP = 1.9;
+    private static final double UP = 0;
     private static final double DOWN = 2;
-    private static final long moveTime = 2000;
+    private static final long moveTime = 500;
 
     private boolean lowered = false;
     private volatile double pulseWidth = 0; // As % of cycle
+    private volatile long stopTime = 0;
 
     public Servo(GpioPinDigitalOutput pin, double cycleFrequency) {
         Thread servoThread = new Thread(() -> {
             //noinspection InfiniteLoopStatement
             while (true) {
                 try {
-                    pin.high();
+                    if (stopTime < System.currentTimeMillis() && pulseWidth == UP) {
+                        pin.low();
+                    } else {
+                        pin.high();
+                    }
                     double lowTime = 1000 / cycleFrequency - pulseWidth;
                     long upMs = (long) pulseWidth; // Up time miliseconds
                     int upNanos = ((int) pulseWidth * 1000000 % 1000000); // Up time nanoseconds
@@ -35,7 +40,6 @@ public class Servo {
             }
         });
         servoThread.start();
-
     }
 
     public void setLowered(boolean b) throws InterruptedException {
@@ -44,6 +48,8 @@ public class Servo {
         lowered = b;
         pulseWidth = b ? DOWN : UP;
         Thread.sleep(moveTime);
+
+        stopTime = System.currentTimeMillis() + 150;
     }
 
     public boolean isLowered() {
@@ -52,7 +58,8 @@ public class Servo {
 
     public void reset() throws InterruptedException {
         lowered = false;
-        pulseWidth = DOWN;
+        pulseWidth = UP;
+        stopTime = System.currentTimeMillis() + 150;
         Thread.sleep(moveTime);
     }
 }

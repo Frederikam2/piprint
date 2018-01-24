@@ -182,21 +182,26 @@ public class Workspace {
                 }
             }
             log.info("Finished drawing {} paths", size);
+            try {
+                servoMotor.setLowered(false);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         private void drawPath(LinkedList<Point> path) throws InterruptedException {
-            for (int i = 0; i < path.size(); i++) {
+            while (!path.isEmpty()) {
                 Point pos = path.removeFirst();
                 nextPosition = pos;
                 goToPoint(pos);
                 lastPosition = pos;
                 lastTime = System.currentTimeMillis();
+                servoMotor.setLowered(true);
             }
+            servoMotor.setLowered(false);
         }
 
         private void goToPoint(Point point) throws InterruptedException {
-            Point unit = point.scaleToHaveOneAxisBe1();
-
             Point diff = point.minus(lastPosition);
             int time = (int) Math.max(
                     Math.abs(diff.getX() * minStepInterval),

@@ -88,8 +88,10 @@ public class Main {
                 while (true) {
                     log.info("Lowering");
                     servo.setLowered(true);
+                    Thread.sleep(1000);
                     log.info("Lifting");
                     servo.setLowered(false);
+                    Thread.sleep(1000);
                 }
         }
     }
