@@ -1,31 +1,43 @@
 package com.frederikam.piprint.print;
 
+import com.frederikam.piprint.Main;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Servo {
 
-    private static final double UP = 0;
-    private static final double DOWN = 1;
-    private static final long moveTime = 1000;
+    private static final Logger log = LoggerFactory.getLogger(Servo.class);
+    private static final double UP = 1.9;
+    private static final double DOWN = 2;
+    private static final long moveTime = 2000;
 
     private boolean lowered = false;
-    private final double cycleLengthMs;
     private volatile double pulseWidth = 0; // As % of cycle
 
     public Servo(GpioPinDigitalOutput pin, double cycleFrequency) {
-        cycleLengthMs = 1000d / cycleFrequency;
-        Runnable task = () -> pin.pulse((long) (cycleLengthMs * pulseWidth), false);
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor((r) -> {
-            Thread t = new Thread();
-            t.setDaemon(true);
-            t.setName("Servo");
-            return t;
+        Main.gpio.
+        Thread servoThread = new Thread(() -> {
+            //noinspection InfiniteLoopStatement
+            while (true) {
+                try {
+                    pin.high();
+                    double lowTime = 1000 / cycleFrequency - pulseWidth;
+                    long upMs = (long) pulseWidth; // Up time miliseconds
+                    int upNanos = ((int) pulseWidth * 1000000 % 1000000); // Up time nanoseconds
+                    Thread.sleep(upMs, upNanos);
+                    pin.low();
+                    long lowMs = (long) lowTime;
+                    int lowNanos = (int) (lowTime * 1000000 % 1000000);
+
+                    java.lang.Thread.sleep(lowMs, lowNanos);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         });
-        executor.scheduleAtFixedRate(task, 0, (long) cycleLengthMs, TimeUnit.MILLISECONDS);
+        servoThread.start();
+
     }
 
     public void setLowered(boolean b) throws InterruptedException {

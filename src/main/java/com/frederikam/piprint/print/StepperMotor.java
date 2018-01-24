@@ -1,7 +1,9 @@
 package com.frederikam.piprint.print;
 
 import com.pi4j.component.motor.impl.GpioStepperMotorComponent;
-import com.pi4j.io.gpio.*;
+import com.pi4j.io.gpio.GpioPinDigitalOutput;
+import com.pi4j.io.gpio.Pin;
+import com.pi4j.io.gpio.PinState;
 
 import static com.frederikam.piprint.Main.gpio;
 
@@ -17,7 +19,8 @@ public class StepperMotor {
     private final byte[] singleStepBackwardSeq;
 
     public StepperMotor(Pin pin1, Pin pin2,
-                        Pin pin3, Pin pin4) {
+                        Pin pin3, Pin pin4,
+                        int stepsPerRevolution) {
         this.pin1 = gpio.provisionDigitalOutputPin(pin1, PinState.LOW);
         this.pin2 = gpio.provisionDigitalOutputPin(pin3, PinState.LOW);
         this.pin3 = gpio.provisionDigitalOutputPin(pin2, PinState.LOW);
@@ -50,7 +53,11 @@ public class StepperMotor {
         singleStepBackwardSeq[2] = singleStepForwardSeq[1];
         singleStepBackwardSeq[3] = singleStepForwardSeq[0];
 
-        motor.setStepsPerRevolution(200);
+        motor.setStepsPerRevolution(stepsPerRevolution);
+    }
+
+    public StepperMotor(Pin pin1, Pin pin2, Pin pin3, Pin pin4) {
+        this(pin1, pin2, pin3, pin4, 400);
     }
 
     public void step(long steps, long stepInterval) {

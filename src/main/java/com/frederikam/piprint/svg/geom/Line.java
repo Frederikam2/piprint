@@ -15,4 +15,6 @@ public abstract class Line {
     public void setColor(Color color) {
         this.color = color;
     }
+
+    public abstract Point getStart();
 }

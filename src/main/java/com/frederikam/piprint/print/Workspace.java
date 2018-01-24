@@ -1,11 +1,15 @@
 package com.frederikam.piprint.print;
 
 import com.frederikam.piprint.svg.Svg;
+import com.frederikam.piprint.svg.geom.CubicBezierCurve;
+import com.frederikam.piprint.svg.geom.Line;
 import com.frederikam.piprint.svg.geom.Point;
+import com.frederikam.piprint.svg.geom.StraightLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,7 +19,6 @@ public class Workspace {
 
     private static final Logger log = LoggerFactory.getLogger(Workspace.class);
 
-    private final Svg svg;
     private final StepperMotor stepperX;
     private final StepperMotor stepperY;
     private final Servo servoMotor;
@@ -34,32 +37,45 @@ public class Workspace {
         this.stepperX = stepperX;
         this.stepperY = stepperY;
         this.servoMotor = servoMotor;
-        this.svg = svg;
         this.minStepInterval = minStepInterval;
 
         /* Compute points */
         svg.getPaths().forEach(path -> {
-            LinkedList<Point> newPath = new LinkedList<>();
-
-            path.getLines().forEach(line -> {
-                for (double i = 0; i < 2; i++) {
-                    newPath.add(line.tween(i/200d));
-                }
-            });
-
-            paths.add(newPath);
+            paths.add(generatePath(path.getLines()));
         });
 
         try {
             log.info("Lifting servo");
             servoMotor.reset();
-
-            log.info("Moving to 0,0");
-            moveSync(-1600, minStepInterval,
-                    -1600, minStepInterval);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private LinkedList<Point> generatePath(List<Line> lines) {
+        LinkedList<Point> points = new LinkedList<>();
+
+        // Add start point
+        points.add(lines.get(0).getStart());
+
+        for (Line line : lines) {
+            if (line instanceof StraightLine) {
+                points.add(((StraightLine) line).getEnd());
+            } else if (line instanceof CubicBezierCurve) {
+                int desiredPoints = (int) (((CubicBezierCurve) line).estimateLength() / 20);
+                desiredPoints = Math.max(1, desiredPoints);
+
+                // Add just enough points to represent a curve, while minimizing rounding errors
+                for (double i = 0; i < desiredPoints; i++) {
+                    points.add(line.tween((i + 1) / desiredPoints));
+                }
+            }
+        }
+
+        // Scale
+        points.replaceAll((point) -> point.multiply(8));
+
+        return points;
     }
 
     public boolean isPaused() {
@@ -92,15 +108,47 @@ public class Workspace {
     }
 
     // Move synchronously with both steppers
-    private void moveSync(int stepsX, int intervalX, int stepsY, int intervalY) throws InterruptedException {
-        Future futureX = stepperExecutor.submit(() -> stepperX.step(stepsX, intervalX));
-        Future futureY = stepperExecutor.submit(() -> stepperY.step(stepsY, intervalY));
+    private void moveSync(int stepsX, int stepsY, int time) throws InterruptedException {
+        log.info("Moving x: {}, y: {}, time: {}ms", stepsX, stepsY, time);
+        Future futureX = stepperExecutor.submit(() -> runStepperX(stepsX, time));
+        Future futureY = stepperExecutor.submit(() -> runStepperY(stepsY, time));
 
         try {
             futureX.get();
             futureY.get();
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void runStepperX(int steps, int time) {
+        if (time == 0 || steps == 0) return;
+        // Ranging from 0 to 1
+        double speed = (minStepInterval * ((double) Math.abs(steps))) / ((double) time);
+        double interval = minStepInterval / speed;
+        // Stepper X supports variable speed, unlike stepper Y which behaves weird
+        stepperX.step(steps, (int) interval);
+    }
+
+    private void runStepperY(int steps, int time) {
+        if (time == 0 || steps == 0) return;
+
+        // Stepper Y steps at a constant interval of 4ms.
+        double interval = 4;
+        double targetCycleSteps = 50; // 1/8 revolution
+        double cycles = steps / targetCycleSteps;
+
+        // Adjust the number of cycles to a non-zero integer
+        cycles = Math.max(1, Math.round(cycles));
+        int stepsPerCycle = (int) (steps / cycles);
+        //noinspection CodeBlock2Expr
+        try {
+            new NanosecondExecutor(() -> {
+                stepperY.step(stepsPerCycle, (long) interval);
+            }, (int) cycles, (int) ((time / cycles) * 1000000))
+                    .run();
+        } catch (InterruptedException e) {
+            log.error("Interrupted while running stepper", e);
         }
     }
 
@@ -120,7 +168,7 @@ public class Workspace {
             int i = 0;
             int size = paths.size();
             try {
-                while(!paths.isEmpty()) {
+                while (!paths.isEmpty()) {
                     i++;
                     log.info("Began drawing path {} of {}", i, size);
                     drawPath(paths.removeFirst());
@@ -147,18 +195,16 @@ public class Workspace {
         }
 
         private void goToPoint(Point point) throws InterruptedException {
-            Point unit = point.unit();
-
-            // Must not divide by zero
-            int intervalX = 0;
-            int intervalY = 0;
-            if (intervalX != unit.getX()) intervalX = (int) (minStepInterval / unit.getX());
-            if (intervalY != unit.getY()) intervalY = (int) (minStepInterval / unit.getY());
+            Point unit = point.scaleToHaveOneAxisBe1();
 
             Point diff = point.minus(lastPosition);
+            int time = (int) Math.max(
+                    Math.abs(diff.getX() * minStepInterval),
+                    Math.abs(diff.getY() * 4));
 
-            moveSync((int) diff.getX(), intervalX,
-                    (int) diff.getY(), intervalY);
+            moveSync((int) diff.getX(),
+                    (int) diff.getY(),
+                    time);
         }
     }
 }
