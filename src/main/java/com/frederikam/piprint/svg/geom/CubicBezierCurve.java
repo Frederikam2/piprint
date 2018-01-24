@@ -32,8 +32,11 @@ public class CubicBezierCurve extends Line {
         // https://math.stackexchange.com/questions/12186/arc-length-of-b%C3%A9zier-curves
 
         double sum = 0;
+        Point lastPoint = p1;
         for (double i = 0; i < 100; i++) {
-            sum += tween(i / 100).magnitude();
+            Point newP = tween(i / 100);
+            sum += newP.minus(lastPoint).magnitude();
+            lastPoint = newP;
         }
 
         return sum;
