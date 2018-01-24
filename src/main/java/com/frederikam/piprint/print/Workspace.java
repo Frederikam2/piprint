@@ -62,7 +62,7 @@ public class Workspace {
             if (line instanceof StraightLine) {
                 points.add(((StraightLine) line).getEnd());
             } else if (line instanceof CubicBezierCurve) {
-                int desiredPoints = (int) (((CubicBezierCurve) line).estimateLength() / 20);
+                int desiredPoints = (int) (((CubicBezierCurve) line).estimateLength() / 4);
                 desiredPoints = Math.max(1, desiredPoints);
 
                 // Add just enough points to represent a curve, while minimizing rounding errors
