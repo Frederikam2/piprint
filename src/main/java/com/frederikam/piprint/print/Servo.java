@@ -1,12 +1,9 @@
 package com.frederikam.piprint.print;
 
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Servo {
 
-    private static final Logger log = LoggerFactory.getLogger(Servo.class);
     private static final double UP = 0;
     private static final double DOWN = 2;
     private static final long moveTime = 500;
@@ -49,7 +46,7 @@ public class Servo {
         pulseWidth = b ? DOWN : UP;
         Thread.sleep(moveTime);
 
-        stopTime = System.currentTimeMillis() + 250;
+        stopTime = System.currentTimeMillis() + 300;
     }
 
     public boolean isLowered() {
@@ -59,7 +56,7 @@ public class Servo {
     public void reset() throws InterruptedException {
         lowered = false;
         pulseWidth = UP;
-        stopTime = System.currentTimeMillis() + 250;
+        stopTime = System.currentTimeMillis() + 300;
         Thread.sleep(moveTime);
     }
 }

@@ -66,7 +66,7 @@ public class Main {
                 StepperMotor sm2 = new StepperMotor(RaspiPin.GPIO_04, RaspiPin.GPIO_05, RaspiPin.GPIO_06, RaspiPin.GPIO_07);
                 ExecutorService exec = Executors.newFixedThreadPool(2);
                 exec.submit(() -> sm1.step(4000000, 2));
-                exec.submit(() -> sm2.step(-80000000, 2));
+                //exec.submit(() -> sm2.step(-80000000, 2));
                 exec.awaitTermination(1000, TimeUnit.SECONDS);
                 break;
             case "unittest":
