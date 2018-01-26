@@ -23,7 +23,7 @@ public class Workspace {
     private final StepperMotor stepperY;
     private final Servo servoMotor;
     private final int minStepInterval; // Where half speed is 2x this interval
-    private final LinkedList<LinkedList<Point>> paths = new LinkedList<>();
+    private final LinkedList<LinkedList<WorkPoint>> paths = new LinkedList<>();
     private final ExecutorService stepperExecutor = Executors.newFixedThreadPool(2);
 
     private Director director;
@@ -52,28 +52,36 @@ public class Workspace {
         }
     }
 
-    private LinkedList<Point> generatePath(List<Line> lines) {
-        LinkedList<Point> points = new LinkedList<>();
+    private LinkedList<WorkPoint> generatePath(List<Line> lines) {
+        LinkedList<WorkPoint> points = new LinkedList<>();
 
         // Add start point
-        points.add(lines.get(0).getStart());
+        points.add(new WorkPoint(lines.get(0).getStart(), false));
 
         for (Line line : lines) {
             if (line instanceof StraightLine) {
-                points.add(((StraightLine) line).getEnd());
+                boolean lifted = points.getLast().minus(line.getStart()).magnitude() > 1;
+
+                points.add(new WorkPoint(
+                        ((StraightLine) line).getEnd(),
+                        !lifted));
             } else if (line instanceof CubicBezierCurve) {
                 int desiredPoints = (int) (((CubicBezierCurve) line).estimateLength() / 4);
                 desiredPoints = Math.max(1, desiredPoints);
 
                 // Add just enough points to represent a curve, while minimizing rounding errors
                 for (double i = 0; i < desiredPoints; i++) {
-                    points.add(line.tween((i + 1) / desiredPoints));
+                    boolean lifted = i == 0 && points.getLast().minus(line.getStart()).magnitude() > 1;
+
+                    points.add(new WorkPoint(
+                            line.tween((i + 1) / desiredPoints),
+                            !lifted));
                 }
             }
         }
 
         // Scale
-        points.replaceAll((point) -> point.multiply(8));
+        points.replaceAll((point) -> new WorkPoint(point.multiply(4), point.lowered));
 
         return points;
     }
@@ -99,12 +107,12 @@ public class Workspace {
      *
      * @return the estimated position
      */
-    private Point getCurrentPosition() {
+    private WorkPoint getCurrentPosition() {
         Point posDiff = lastPosition.minus(nextPosition);
         double timeDiff = System.currentTimeMillis() - lastTime;
         double timeBetweenPoints = (posDiff.magnitude() * minStepInterval);
 
-        return lastPosition.plus(posDiff.multiply(timeDiff / timeBetweenPoints));
+        return new WorkPoint(lastPosition.plus(posDiff.multiply(timeDiff / timeBetweenPoints)));
     }
 
     // Move synchronously with both steppers
@@ -135,7 +143,7 @@ public class Workspace {
 
         // Stepper Y steps at a constant interval of 4ms.
         double interval = 4;
-        double targetCycleSteps = 50; // 1/8 revolution
+        double targetCycleSteps = 25; // 1/16 revolution
         double cycles = steps / targetCycleSteps;
 
         // Adjust the number of cycles to a non-zero integer
@@ -174,6 +182,9 @@ public class Workspace {
                     drawPath(paths.removeFirst());
                     servoMotor.setLowered(false);
                 }
+                // Move back to 0,0
+                goToPoint(new Point(0, 0));
+                System.exit(0);
             } catch (InterruptedException e) {
                 if (servoMotor.isLowered()) {
                     // We are currently drawing! Make sure we return to our current position if we continue drawing
@@ -189,14 +200,14 @@ public class Workspace {
             }
         }
 
-        private void drawPath(LinkedList<Point> path) throws InterruptedException {
+        private void drawPath(LinkedList<WorkPoint> path) throws InterruptedException {
             while (!path.isEmpty()) {
-                Point pos = path.removeFirst();
+                WorkPoint pos = path.removeFirst();
+                servoMotor.setLowered(pos.lowered);
                 nextPosition = pos;
                 goToPoint(pos);
                 lastPosition = pos;
                 lastTime = System.currentTimeMillis();
-                servoMotor.setLowered(true);
             }
             servoMotor.setLowered(false);
         }
@@ -210,6 +221,29 @@ public class Workspace {
             moveSync((int) diff.getX(),
                     (int) diff.getY(),
                     time);
+        }
+    }
+
+    private class WorkPoint extends Point {
+
+        boolean lowered = true;
+
+        WorkPoint(Point p) {
+            super(p.getX(), p.getY());
+        }
+
+        WorkPoint(Point p, boolean lowered) {
+            super(p.getX(), p.getY());
+            this.lowered = lowered;
+        }
+
+        @Override
+        public String toString() {
+            return "WorkPoint{" +
+                    "x=" + this.getX() +
+                    " y=" + this.getY() +
+                    " lowered=" + lowered +
+                    '}';
         }
     }
 }

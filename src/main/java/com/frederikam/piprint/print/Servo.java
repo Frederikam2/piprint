@@ -49,7 +49,7 @@ public class Servo {
         pulseWidth = b ? DOWN : UP;
         Thread.sleep(moveTime);
 
-        stopTime = System.currentTimeMillis() + 150;
+        stopTime = System.currentTimeMillis() + 250;
     }
 
     public boolean isLowered() {
@@ -59,7 +59,7 @@ public class Servo {
     public void reset() throws InterruptedException {
         lowered = false;
         pulseWidth = UP;
-        stopTime = System.currentTimeMillis() + 150;
+        stopTime = System.currentTimeMillis() + 250;
         Thread.sleep(moveTime);
     }
 }
