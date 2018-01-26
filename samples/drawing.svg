@@ -11,7 +11,7 @@
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="76.209549mm"
    height="93.328102mm"
-   viewBox="0 0 76.209549 93.328102"
+   viewBox="0 0 100 100"
    version="1.1"
    id="svg8"
    sodipodi:docname="drawing.svg"
@@ -47,20 +47,9 @@
       </cc:Work>
     </rdf:RDF>
   </metadata>
-  <g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     id="layer1"
-     transform="translate(-29.046943,-63.952669)">
-    <path
-       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="M 29.104167,95.538689 94.494048,64.166666 92.22619,126.15476 46.491072,128.04464 84.28869,89.869049 l 20.78869,62.744041 -64.255953,4.53572"
-       id="path815"
-       inkscape:connector-curvature="0" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 35.28355,128.55458 c 7.46503,-4.25223 -0.850446,-20.78869 -0.850446,-20.78869"
-       id="path838"
-       inkscape:connector-curvature="0" />
-  </g>
+  <path
+          style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+          d="M 25 25 75 25 75 75 25 75 z"
+          id="path815"
+          inkscape:connector-curvature="0" />
 </svg>
